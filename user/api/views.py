@@ -18,13 +18,13 @@ from rest_framework.utils import json
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from configs.SMSConfig import OTPManager
-from ecommerce.common.emails import send_email_without_delay
+# from ecommerce.common.emails import send_email_without_delay
 from external.validation.data_validator import check_dict_data_rise_error
 from user import models as user_models
 import jwt
 from django.template.loader import render_to_string
 from user import serializers as user_serializers
-from user.models import CustomerProfile, User, OTPModel
+from user.models import User, OTPModel
 from rest_framework.views import APIView
 from user.serializers import  SubscriptionSerializer,  \
     ChangePasswordSerializer, OTPSendSerializer, OTPVerifySerializer, OTPReSendSerializer, SetPasswordSerializer

@@ -110,7 +110,7 @@ class SendOTPAPIView(CreateAPIView):
                 otp = OTPModel.objects.get(contact_number=phone)
                 otp_sending_time = datetime.now(pytz.timezone('Asia/Dhaka'))
                 otp.otp_number = OTPManager().initialize_otp_and_sms_otp(phone)
-                otp.otp_sending_time = otp_sending_time
+                otp.expired_time = otp_sending_time
                 otp.save()
         
             except OTPModel.DoesNotExist:
@@ -120,7 +120,7 @@ class SendOTPAPIView(CreateAPIView):
             return ResponseWrapper(data={"contact_number": otp.contact_number,"otp_number": otp.otp_number}, status=200)  
                 
         else:
-             return ResponseWrapper(
+            return ResponseWrapper(
                 error_msg="Phone number is required", status=400
             )
 
@@ -162,38 +162,46 @@ class OTPVerifyAPIVIEW(CreateAPIView):
     permission_classes = [AllowAny, ]
 
     def post(self, request, *args, **kwargs):
-        contact_number = check_dict_data_rise_error("contact_number", request_data=request.data, arrise=True)
-        otp_number = check_dict_data_rise_error("otp_number", request_data=request.data, arrise=True)
+        contact_number = request.data.get("contact_number")
+        otp_number = request.data.get("otp_number")
         try:
             otp_obj = OTPModel.objects.filter(contact_number=contact_number).last()
             if str(otp_obj.otp_number) == otp_number:
                 otp_obj.verified_phone = True
-                # OTP matched
                 otp_sent_time = otp_obj.expired_time
                 timediff = datetime.now(pytz.timezone('Asia/Dhaka')) - otp_sent_time
                 time_in_seconds = timediff.total_seconds()
 
                 if time_in_seconds > 120:
-                    return Response({
-                        'result': 'time expired'
-                    }, status=status.HTTP_408_REQUEST_TIMEOUT)
+                    return ResponseWrapper(error_msg="time expired", status=408)
                 try:
                     user = User.objects.get(phone=contact_number)
-                    user.is_active = True
+                    token = RefreshToken.for_user(user) 
+                except:
+                    user = None
+                    user = User.objects.create(
+                    phone=contact_number,
+                    is_active=True
+                    )
                     user.save()
                     token = RefreshToken.for_user(user)
-                except:
-                    pass
 
                 otp_obj.save()
-                return Response({"user_id": user.id, "email": user.email, "name": user.name, "phone": user.phone,  'details': 'Verified', "access_token": str(token.access_token) if token else None, "refresh_token": str(token) if token else None}, status=status.HTTP_200_OK)
+                return ResponseWrapper(
+                        data={
+                            "refresh": str(token) if token else None,
+                            "access": str(token.access_token) if token else None,
+                            "user_id": user.id,
+                            "phone": user.phone,
+                            "is_active": user.is_active
+                        },
+                        status=200
+                    )
             else:
-                return Response({'details': "Incorrect OTP"}, status=status.HTTP_400_BAD_REQUEST)
+                return ResponseWrapper(error_msg="Incorrect OTP", status=400)
+    
         except Exception as e:
-            return Response(
-                data={'details': "Number doesn't exists"},
-                status=status.HTTP_406_NOT_ACCEPTABLE
-            )
+            return ResponseWrapper(error_msg="Number doesn't exists", status=406)
 
 
 class LoginUser(mixins.CreateModelMixin,

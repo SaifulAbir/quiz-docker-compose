@@ -1,5 +1,4 @@
 from time import time
-
 import pytz
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
@@ -24,10 +23,12 @@ from user import models as user_models
 import jwt
 from django.template.loader import render_to_string
 from user import serializers as user_serializers
-from user.models import User, OTPModel
+from user.models import *
 from rest_framework.views import APIView
-from user.serializers import  SubscriptionSerializer,  \
-    ChangePasswordSerializer, OTPSendSerializer, OTPVerifySerializer, OTPReSendSerializer, SetPasswordSerializer
+from user.serializers import  *
+from django.core.validators import RegexValidator
+import re
+from utills.response_wrapper import ResponseWrapper
 
 
 # class RegisterUser(mixins.CreateModelMixin,
@@ -71,30 +72,30 @@ from user.serializers import  SubscriptionSerializer,  \
 #             return Response({"status": False, "data": {"message": "User not registered. Please try again.", "errors": serializer.errors}}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
-class SetPasswordAPIView(CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = SetPasswordSerializer
-    permission_classes = [AllowAny]
+# class SetPasswordAPIView(CreateAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = SetPasswordSerializer
+#     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        email = check_dict_data_rise_error("email", request_data=request.data, arrise=True)
-        phone = check_dict_data_rise_error("phone", request_data=request.data, arrise=True)
-        password = check_dict_data_rise_error("password", request_data=request.data, arrise=True)
-        try:
-            user = User.objects.get(phone=phone, email=email)
-        except User.DoesNotExist:
-            user = None
-        if user:
-            user.set_password(password)
-            user.is_active = True
-            user.save()
-            return Response(
-                data={"user_id": user.id if user else None, "details": "Password setup successful"},
-                status=status.HTTP_201_CREATED)
-        else:
-            return Response(
-                data={"user_id": user.id if user else None, "details": "Password setup not successful"},
-                status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request, *args, **kwargs):
+#         email = check_dict_data_rise_error("email", request_data=request.data, arrise=True)
+#         phone = check_dict_data_rise_error("phone", request_data=request.data, arrise=True)
+#         password = check_dict_data_rise_error("password", request_data=request.data, arrise=True)
+#         try:
+#             user = User.objects.get(phone=phone, email=email)
+#         except User.DoesNotExist:
+#             user = None
+#         if user:
+#             user.set_password(password)
+#             user.is_active = True
+#             user.save()
+#             return Response(
+#                 data={"user_id": user.id if user else None, "details": "Password setup successful"},
+#                 status=status.HTTP_201_CREATED)
+#         else:
+#             return Response(
+#                 data={"user_id": user.id if user else None, "details": "Password setup not successful"},
+#                 status=status.HTTP_400_BAD_REQUEST)
 
 
 class SendOTPAPIView(CreateAPIView):
@@ -103,42 +104,25 @@ class SendOTPAPIView(CreateAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        is_login = check_dict_data_rise_error("is_login", request_data=request.data, arrise=True)
-        if is_login == "false":
-            email = check_dict_data_rise_error("email", request_data=request.data, arrise=True)
-        phone = check_dict_data_rise_error("phone", request_data=request.data, arrise=True)
+        if request.data.get("phone"):
+            phone = request.data.get("phone")
+            try:
+                otp = OTPModel.objects.get(contact_number=phone)
+                otp_sending_time = datetime.now(pytz.timezone('Asia/Dhaka'))
+                otp.otp_number = OTPManager().initialize_otp_and_sms_otp(phone)
+                otp.otp_sending_time = otp_sending_time
+                otp.save()
+        
+            except OTPModel.DoesNotExist:
+                otp_sending_time = datetime.now(pytz.timezone('Asia/Dhaka'))
+                otp = OTPModel.objects.create(contact_number=phone, otp_number=OTPManager().initialize_otp_and_sms_otp(phone), expired_time=otp_sending_time)
 
-        if is_login == "false":
-            user_obj = User.objects.filter(Q(email=email) | Q(phone=phone))
-            for user_data in user_obj:
-                if user_data.email == email:
-                    return Response({"details": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
-                if user_data.phone == phone:
-                    return Response({"details": "Phone number already exists"}, status=status.HTTP_400_BAD_REQUEST)
-
-            user = User.objects.create(
-                email=email,
-                phone=phone,
-                username=email,
-                is_customer=True
+            return ResponseWrapper(data={"contact_number": otp.contact_number,"otp_number": otp.otp_number}, status=200)  
+                
+        else:
+             return ResponseWrapper(
+                error_msg="Phone number is required", status=400
             )
-
-            user.is_active = False
-            user.set_password(phone)
-            user.save()
-        # Generate OTP Here
-        sent_otp = OTPManager().initialize_otp_and_sms_otp(phone)
-        otp_sending_time = datetime.now(pytz.timezone('Asia/Dhaka'))
-        otp_model = OTPModel.objects.create(
-            contact_number=phone,
-            otp_number=sent_otp,
-            expired_time=otp_sending_time
-        )
-        otp_model.save()
-        user= User.objects.get(phone = phone)
-        return Response(
-            data={"user_id": user.id if user else None, "sent_otp": sent_otp},
-            status=status.HTTP_201_CREATED)
 
 
 class ReSendOTPAPIView(CreateAPIView):
@@ -245,21 +229,21 @@ class LoginUser(mixins.CreateModelMixin,
             return Response({"status": False, "data": {"message": "Invalid credentials", "error": serializer.errors}}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
-class VerifyUserAPIView(APIView):
-    permission_classes = [AllowAny]
-    lookup_url_kwarg = "verification_token"
+# class VerifyUserAPIView(APIView):
+#     permission_classes = [AllowAny]
+#     lookup_url_kwarg = "verification_token"
 
-    def get(self,  *args, **kwargs):
-        verification_token = kwargs.get(self.lookup_url_kwarg)
-        try:
-            payload = jwt.decode(jwt=verification_token, key=settings.JWT_SECRET, algorithms=['HS256'])
-            user = User.objects.get(email=payload['email'])
-            if not user.is_active:
-                user.is_active = True
-                user.save()
-            return Response({"message": "Successfully activated"}, status=status.HTTP_200_OK)
-        except jwt.ExpiredSignatureError:
-            return Response({"message": "Token expired. Get new one"}, status=status.HTTP_401_UNAUTHORIZED)
+#     def get(self,  *args, **kwargs):
+#         verification_token = kwargs.get(self.lookup_url_kwarg)
+#         try:
+#             payload = jwt.decode(jwt=verification_token, key=settings.JWT_SECRET, algorithms=['HS256'])
+#             user = User.objects.get(email=payload['email'])
+#             if not user.is_active:
+#                 user.is_active = True
+#                 user.save()
+#             return Response({"message": "Successfully activated"}, status=status.HTTP_200_OK)
+#         except jwt.ExpiredSignatureError:
+#             return Response({"message": "Token expired. Get new one"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 # class CustomerRetrieveUpdateAPIView(RetrieveUpdateAPIView):
@@ -273,12 +257,12 @@ class VerifyUserAPIView(APIView):
 #     #     return self.update(request, *args, **kwargs)
 
 
-class SubscriptionAPIView(CreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SubscriptionSerializer
+# class SubscriptionAPIView(CreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = SubscriptionSerializer
 
-    def post(self, request, *args, **kwargs):
-        return super(SubscriptionAPIView, self).post(request, *args, **kwargs)
+#     def post(self, request, *args, **kwargs):
+#         return super(SubscriptionAPIView, self).post(request, *args, **kwargs)
 
 
 # @api_view(["POST"])
@@ -339,9 +323,9 @@ class SubscriptionAPIView(CreateAPIView):
 #     serializer_class = UserRegisterSerializer
 
 
-class ChangePasswordView(generics.UpdateAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = ChangePasswordSerializer
+# class ChangePasswordView(generics.UpdateAPIView):
+#     permission_classes = (IsAuthenticated,)
+#     serializer_class = ChangePasswordSerializer
 
-    def get_object(self):
-        return self.request.user
+#     def get_object(self):
+#         return self.request.user

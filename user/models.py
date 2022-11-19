@@ -11,39 +11,46 @@ from quiz.models import AbstractTimeStamp
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def _create_user(self, email, password, **extra_fields):
+    def _create_user(self, username, password, **extra_fields):
         """
-        Creates and saves a User with the given email and password.
+        Create and save a user with the given username, email, and password.
         """
-        if not email:
-            raise ValueError('The given email must be set')
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        username = self.model.normalize_username(username)
+        user = self.model(
+            **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, username=None,  password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
-        return self._create_user(email, password, **extra_fields)
+        return self._create_user(username, password, **extra_fields)
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(self, username=None, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault("is_staff", True)
 
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self._create_user(email, password, **extra_fields)
-
+        return self._create_user(username, password, **extra_fields)
 
 phone_regex = RegexValidator(regex='^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$',message='Invalid phone number')
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(max_length=100, unique=True)
-    name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField(max_length=255, unique=True)
+    username = None
+    GENDER_TYPES = (
+        ('MALE', 'MALE'),
+        ('FEMALE', 'FEMALE'),
+    )
+    full_name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(max_length=255, unique=True, blank=True, null=True)
+    gender=models.CharField(max_length=20, blank=True, null=True,
+                                     choices=GENDER_TYPES)
     address = models.CharField(max_length=150, blank=True)
     age = models.IntegerField(blank=True, null=True)
     life = models.IntegerField(blank=True, null=True)
@@ -54,29 +61,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     verified_email = models.BooleanField(default=False)
-    phone = models.CharField(max_length=255, validators=[phone_regex], null=True, blank=True)
+    phone = models.CharField(max_length=255, validators=[phone_regex])
     date_joined = models.DateTimeField(('date joined'), auto_now_add=True)
 
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', ]
+    USERNAME_FIELD = 'email'
 
     objects = UserManager()
 
     def get_short_name(self):
-        return self.username
-
-    def get_full_name(self):
-        full_name = None
-        if self.first_name or self.last_name:
-            full_name = self.first_name + " " + self.last_name
-        elif self.username:
-            full_name = self.username
-        else:
-            full_name = self.email
-        return full_name
+        return self.full_name
 
     def __str__(self):
-        return self.email
+        if self.phone:
+            return self.phone
+        if self.email:
+            return self.email
 
     class Meta:
         ordering = ['-is_active']
@@ -93,7 +92,7 @@ class OTPModel(AbstractTimeStamp):
         expired_time: DateTimeField
 
     """
-    contact_number = models.CharField(_('Contact Number'), max_length=20, null=False, blank=False)
+    contact_number = models.CharField(_('Contact Number'), max_length=255, validators=[phone_regex], null=False, blank=False)
     otp_number = models.IntegerField(_('OTP Number'), null=False, blank=False)
     verified_phone = models.BooleanField(default=False)
     expired_time = models.DateTimeField(_('Expired Time'), null=False, blank=False)

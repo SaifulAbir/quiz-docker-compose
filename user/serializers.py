@@ -31,3 +31,10 @@ class LoginSerializer(serializers.Serializer):
     Serializer for login endpoint.
     """
     phone = serializers.CharField(required=True)
+
+
+# class UserRegisterSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = User
+#         fields = "__all__"

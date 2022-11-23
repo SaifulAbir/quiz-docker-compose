@@ -7,7 +7,7 @@ from datetime import datetime
 from rest_framework import viewsets, mixins, status, generics
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView, ListAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
@@ -185,6 +185,10 @@ class OTPVerifyAPIVIEW(CreateAPIView):
                     user = None
                     user = User.objects.create(
                     phone=contact_number,
+                    life=10,
+                    hint=10,
+                    level=0,
+                    point=0,
                     is_active=True
                     )
                     user.save()
@@ -341,3 +345,11 @@ class OTPVerifyAPIVIEW(CreateAPIView):
 
 #     def get_object(self):
 #         return self.request.user
+
+# get user details
+# class UserDetailAPIView(RetrieveAPIView):
+#     queryset = User.objects.filter()
+#     permission_classes = [AllowAny]
+#     serializer_class = UserRegisterSerializer
+#     lookup_field = 'id'
+

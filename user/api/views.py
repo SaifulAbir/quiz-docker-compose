@@ -185,6 +185,7 @@ class OTPVerifyAPIVIEW(CreateAPIView):
                     user = None
                     user = User.objects.create(
                     phone=contact_number,
+                    password=make_password("12345678"),
                     life=10,
                     hint=10,
                     level=0,
@@ -264,13 +265,13 @@ class OTPVerifyAPIVIEW(CreateAPIView):
 
 # class CustomerRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 #     serializer_class = CustomerProfileUpdateSerializer
-#
+
 #     def get_object(self):
 #         customer = CustomerProfile.objects.get(user=self.request.user)
 #         return customer
-#
-#     # def put(self, request, *args, **kwargs):
-#     #     return self.update(request, *args, **kwargs)
+
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request, *args, **kwargs)
 
 
 # class SubscriptionAPIView(CreateAPIView):
@@ -346,10 +347,47 @@ class OTPVerifyAPIVIEW(CreateAPIView):
 #     def get_object(self):
 #         return self.request.user
 
-# get user details
-# class UserDetailAPIView(RetrieveAPIView):
-#     queryset = User.objects.filter()
-#     permission_classes = [AllowAny]
-#     serializer_class = UserRegisterSerializer
-#     lookup_field = 'id'
 
+
+class UserDetailsUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    
+    def get_queryset(self):
+        user = User.objects.get(id=self.request.user.id)
+        return user
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            user = self.get_queryset()
+            serializer = UserSerializer(user)
+            return ResponseWrapper(data=serializer.data, msg="User found", status=200)
+        except Exception as e:
+            return ResponseWrapper(error_msg=str(e), status=500)
+
+    def put(self, request, *args, **kwargs):
+        try:
+            user = self.get_queryset()
+            full_name = request.data.get('full_name')
+            email = request.data.get('email')
+            gender = request.data.get('gender')
+            address = request.data.get('address')
+            age = request.data.get('age')   
+            if full_name:
+                user.full_name = full_name
+            if email:
+                user.email = email
+            if gender:
+                user.gender = gender
+            if address:
+                user.address = address
+            if age:
+                user.age = age
+            user.save()
+            serializer = UserSerializer(user, many=False)
+            return ResponseWrapper(data=serializer.data, msg="User updated successfully", status=200)
+        except Exception as e:
+            return ResponseWrapper(error_msg=str(e), status=500) 
+
+
+    

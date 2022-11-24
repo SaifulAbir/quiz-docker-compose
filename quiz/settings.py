@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
 
-    'user'
+    'user',
+    'question'
 ]
 
 MIDDLEWARE = [

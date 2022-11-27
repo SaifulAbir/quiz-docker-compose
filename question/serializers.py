@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Question, QuestionChoice
+from .models import Category, Question, QuestionChoice, StoreAnswer
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -23,11 +23,24 @@ class QuestionChoiceSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     question_choice = QuestionChoiceSerializer(many=True)
+
     class Meta:
         model = Question
         fields = (
             'id',
             'category',
             'title',
+            'level',
             'question_choice',
+        )
+
+
+class StoreAnswerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = StoreAnswer
+        fields = (
+            'user_id',
+            'question_id',
+            'answer',
         )

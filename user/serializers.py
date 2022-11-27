@@ -6,7 +6,7 @@ from user.models import *
 
 class OTPSendSerializer(serializers.ModelSerializer):
     class Meta:
-        extra_kwargs = {"phone": {"required": True}}
+        extra_kwargs = {"contact_number": {"required": True}}
         fields = "__all__"
         model = OTPModel
 

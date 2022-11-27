@@ -13,16 +13,18 @@ class OTPSendSerializer(serializers.ModelSerializer):
 
 class OTPReSendSerializer(serializers.ModelSerializer):
     class Meta:
-        extra_kwargs = {'contact_number': {'required': True}}
-        fields = ('contact_number',)
+        extra_kwargs = {"contact_number": {"required": True}}
+        fields = ("contact_number",)
         model = OTPModel
 
 
 class OTPVerifySerializer(serializers.ModelSerializer):
     class Meta:
-        extra_kwargs = {'contact_number': {'required': True},
-                        'otp_number': {'required': True}}
-        fields = ('contact_number', 'otp_number')
+        extra_kwargs = {
+            "contact_number": {"required": True},
+            "otp_number": {"required": True},
+        }
+        fields = ("contact_number", "otp_number")
         model = OTPModel
 
 
@@ -30,6 +32,7 @@ class LoginSerializer(serializers.Serializer):
     """
     Serializer for login endpoint.
     """
+
     phone = serializers.CharField(required=True)
 
 

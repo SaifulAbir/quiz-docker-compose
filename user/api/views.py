@@ -7,7 +7,7 @@ from datetime import datetime
 from rest_framework import viewsets, mixins, status, generics
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView, ListAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
@@ -131,26 +131,30 @@ class ReSendOTPAPIView(CreateAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        contact_number = check_dict_data_rise_error("contact_number", request_data=request.data, arrise=True)
-        sent_otp = OTPManager().initialize_otp_and_sms_otp(contact_number)
-        otp_sending_time = datetime.now(pytz.timezone('Asia/Dhaka'))
-        try:
-            otp_obj = OTPModel.objects.get(contact_number=contact_number)
-        except OTPModel.DoesNotExist:
-            otp_obj = None
-        if not otp_obj:
-            return Response({
-                'details': "Number doesn't exists"
-            }, status=status.HTTP_400_BAD_REQUEST)
-        otp_model = OTPModel.objects.create(
-            contact_number=contact_number,
-            otp_number=sent_otp,
-            expired_time=otp_sending_time
-        )
-        otp_model.save()
-        return Response(
-            data={"sent_otp": sent_otp},
-            status=status.HTTP_201_CREATED)
+        contact_number = request.data.get("contact_number")
+        if contact_number:
+            sent_otp = OTPManager().initialize_otp_and_sms_otp(contact_number)
+            otp_sending_time = datetime.now(pytz.timezone('Asia/Dhaka'))
+            try:
+                otp_obj = OTPModel.objects.get(contact_number=contact_number)
+                otp_obj.otp_number = sent_otp
+                otp_obj.expired_time = otp_sending_time
+                otp_obj.save()
+            except OTPModel.DoesNotExist:
+                otp_obj = None
+            if not otp_obj:
+                return ResponseWrapper(
+                    error_msg="Number doesn't exists", status=400
+                )
+            # return Response(
+            #     data={"sent_otp": sent_otp},
+            #     status=status.HTTP_201_CREATED)
+            return ResponseWrapper(data={"sent_otp": sent_otp}, status=200)
+        else:
+            return ResponseWrapper(
+                error_msg="Phone number is required", status=400
+            )
+
 
 
 class OTPVerifyAPIVIEW(CreateAPIView):
@@ -181,6 +185,11 @@ class OTPVerifyAPIVIEW(CreateAPIView):
                     user = None
                     user = User.objects.create(
                     phone=contact_number,
+                    password=make_password("12345678"),
+                    life=10,
+                    hint=10,
+                    level=0,
+                    point=0,
                     is_active=True
                     )
                     user.save()
@@ -204,37 +213,37 @@ class OTPVerifyAPIVIEW(CreateAPIView):
             return ResponseWrapper(error_msg="Number doesn't exists", status=406)
 
 
-class LoginUser(mixins.CreateModelMixin,
-                viewsets.GenericViewSet):
-    serializer_class = user_serializers.LoginSerializer
-    permission_classes = [AllowAny]
+# class LoginUser(mixins.CreateModelMixin,
+#                 viewsets.GenericViewSet):
+#     serializer_class = user_serializers.LoginSerializer
+#     permission_classes = [AllowAny]
 
-    @csrf_exempt
-    def create(self, request):
-        serializer = user_serializers.LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = request.data["email"]
-            password = request.data["password"]
-            try:
-                check = user_models.User.objects.get(email=email)
-                user = authenticate(
-                    request, username=request.data["email"], password=request.data["password"])
-            except (user_models.User.DoesNotExist, Exception):
-                return Response({"status": False, "data": {"message": "Invalid credentials"}}, status=status.HTTP_404_NOT_FOUND)
-            if user:
-                token = RefreshToken.for_user(user)
-                data = {
-                    "user_id": user.id,
-                    "email": user.email,
-                    "name": user.name,
-                    "access_token": str(token.access_token),
-                    "refresh_token": str(token)
-                }
-                return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
-            else:
-                return Response({"status": False, "data": {"message": "Invalid credentials"}}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        else:
-            return Response({"status": False, "data": {"message": "Invalid credentials", "error": serializer.errors}}, status=status.HTTP_406_NOT_ACCEPTABLE)
+#     @csrf_exempt
+#     def create(self, request):
+#         serializer = user_serializers.LoginSerializer(data=request.data)
+#         if serializer.is_valid():
+#             email = request.data["email"]
+#             password = request.data["password"]
+#             try:
+#                 check = user_models.User.objects.get(email=email)
+#                 user = authenticate(
+#                     request, username=request.data["email"], password=request.data["password"])
+#             except (user_models.User.DoesNotExist, Exception):
+#                 return Response({"status": False, "data": {"message": "Invalid credentials"}}, status=status.HTTP_404_NOT_FOUND)
+#             if user:
+#                 token = RefreshToken.for_user(user)
+#                 data = {
+#                     "user_id": user.id,
+#                     "email": user.email,
+#                     "name": user.name,
+#                     "access_token": str(token.access_token),
+#                     "refresh_token": str(token)
+#                 }
+#                 return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"status": False, "data": {"message": "Invalid credentials"}}, status=status.HTTP_406_NOT_ACCEPTABLE)
+#         else:
+#             return Response({"status": False, "data": {"message": "Invalid credentials", "error": serializer.errors}}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 # class VerifyUserAPIView(APIView):
@@ -256,13 +265,13 @@ class LoginUser(mixins.CreateModelMixin,
 
 # class CustomerRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 #     serializer_class = CustomerProfileUpdateSerializer
-#
+
 #     def get_object(self):
 #         customer = CustomerProfile.objects.get(user=self.request.user)
 #         return customer
-#
-#     # def put(self, request, *args, **kwargs):
-#     #     return self.update(request, *args, **kwargs)
+
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request, *args, **kwargs)
 
 
 # class SubscriptionAPIView(CreateAPIView):

@@ -54,4 +54,6 @@ class CategoryWiseLeaderBoardSerializer(serializers.ModelSerializer):
         model = CategoryWiseLeaderBoard
         fields = (
             'cat_point',
+            'user_id',
+            'user_name',
         )

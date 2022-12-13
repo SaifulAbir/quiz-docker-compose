@@ -75,6 +75,7 @@ class CategoryLeaderboardListAPIView(ListAPIView):
         if cat_id:
             try:
                 leader = CategoryWiseLeaderBoard.objects.filter(category_id=cat_id).order_by("-cat_point")
+                return leader
 
                 # name = []
                 # point = []
@@ -90,6 +91,7 @@ class CategoryLeaderboardListAPIView(ListAPIView):
 
             except:
                 pass
+
 
         #         queryset = Product.objects.filter(
         #             vendor=vendor, status='ACTIVE').order_by('-created_at')

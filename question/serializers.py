@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Question, QuestionChoice, StoreAnswer
+from .models import Category, Question, QuestionChoice, StoreAnswer, CategoryWiseLeaderBoard
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -41,6 +41,17 @@ class StoreAnswerSerializer(serializers.ModelSerializer):
         model = StoreAnswer
         fields = (
             'user_id',
-            'question_id',
-            'answer',
+            'point',
+            'cat_id',
+            'point',
+            # 'question_id',
+            # 'answer',
+        )
+
+class CategoryWiseLeaderBoardSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CategoryWiseLeaderBoard
+        fields = (
+            'cat_point',
         )

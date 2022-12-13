@@ -115,7 +115,8 @@ class SendOTPAPIView(CreateAPIView):
         
             except OTPModel.DoesNotExist:
                 otp_sending_time = datetime.now(pytz.timezone('Asia/Dhaka'))
-                otp = OTPModel.objects.create(contact_number=phone, otp_number=OTPManager().initialize_otp_and_sms_otp(phone), expired_time=otp_sending_time)
+                otp = OTPModel.objects.create(contact_number=phone, otp_number=OTPManager().
+                                              initialize_otp_and_sms_otp(phone), expired_time=otp_sending_time)
 
             return ResponseWrapper(data={"contact_number": otp.contact_number, "otp_number": otp.otp_number}, status=200)
                 
@@ -189,7 +190,7 @@ class OTPVerifyAPIVIEW(CreateAPIView):
                     life=10,
                     hint=10,
                     level=0,
-                    point=0,
+                    point=100,
                     is_active=True
                     )
                     user.save()

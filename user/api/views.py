@@ -177,7 +177,7 @@ class OTPVerifyAPIVIEW(CreateAPIView):
                 timediff = datetime.now(pytz.timezone('Asia/Dhaka')) - otp_sent_time
                 time_in_seconds = timediff.total_seconds()
 
-                if time_in_seconds > 120:
+                if time_in_seconds > 604800:
                     return ResponseWrapper(error_msg="time expired", status=408)
                 try:
                     user = User.objects.get(phone=contact_number)

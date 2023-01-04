@@ -27,7 +27,7 @@ class QuestionListAPIView(ListAPIView):
         i = randint(0, Question.objects.count() - 1)
         cat_id = self.kwargs['id']
         try:
-            qtn = Question.objects.filter(category=cat_id).order_by('?')[10]
+            qtn = Question.objects.filter(category=cat_id).order_by('?')[:10]
             return qtn
         except Question.DoesNotExist:
             raise Http404

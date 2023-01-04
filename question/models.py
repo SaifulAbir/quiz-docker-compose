@@ -57,7 +57,7 @@ class StoreAnswer(models.Model):
     created_at = models.DateTimeField(null=True, blank=True, default=timezone.now)
 
     def __str__(self):
-        return self.user_id
+        return self.user_id.username
 
     class Meta:
         verbose_name = "StoreAnswer"

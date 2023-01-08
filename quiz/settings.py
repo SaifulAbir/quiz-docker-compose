@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'user',
     'question',
     'drf_yasg',
+    'import_export',
 ]
 
 MIDDLEWARE = [

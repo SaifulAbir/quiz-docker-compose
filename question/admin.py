@@ -6,7 +6,7 @@ from question.models import Question, QuestionChoice, Category, CategoryWiseLead
 admin.site.register(Category)
 admin.site.register(CategoryWiseLeaderBoard)
 admin.site.register(StoreAnswer)
-
+# admin.site.register(QuestionChoice)
 
 class QuestionChoiceInline(admin.TabularInline):
     model = QuestionChoice
@@ -18,3 +18,7 @@ class QuestionAdmin(ImportExportModelAdmin):
     inlines = [
         QuestionChoiceInline
     ]
+
+@admin.register(QuestionChoice)
+class QuestionChoiceAdmin(ImportExportModelAdmin):
+    pass

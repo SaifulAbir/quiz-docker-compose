@@ -38,6 +38,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('user/', include('user.api.urls')),
     path('api/', include('question.api.urls')),
+    path('api/', include('tournament.api.urls')),
     path('v1/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
 

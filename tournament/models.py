@@ -19,17 +19,42 @@ class Tournament(AbstractTimeStamp):
     published = models.BooleanField(default=False)
     banner = models.ImageField()
     status = models.CharField(max_length=20, null=False, blank=False, choices=TOURNAMENT_STATUS, default=TOURNAMENT_STATUS[1][1])
+    # start_date = models.DateTimeField()
+    # end_date = models.DateTimeField()
 
     def __str__(self):
         return self.title
 
     class Meta:
-        ordering = ['-created_at']
+        # ordering = ['-created_at']
         verbose_name = 'Tournament'
         verbose_name_plural = 'Tournaments'
         db_table = 'tournament'
 
 
-# class TournamentQuestion(AbstractTimeStamp):
-#     tournament = models.ForeignKey(Tournament, on_delete=models.PROTECT, null=False, blank=False)
-#     question = models.ForeignKey(Question, on_delete=models.PROTECT, null=False, blank=False)
+class TournamentQuestion(AbstractTimeStamp):
+    title = models.CharField(max_length=1000, null=False, blank=False)
+    tournament = models.ForeignKey(Tournament, on_delete=models.PROTECT, blank=False, null=False)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "TournamentQuestion"
+        verbose_name_plural = "TournamentQuestions"
+        db_table = 'tour_question'
+
+
+class TournamentQuestionChoice(AbstractTimeStamp):
+    title = models.CharField(max_length=500, null=False, blank=False)
+    question = models.ForeignKey(
+        TournamentQuestion, on_delete=models.PROTECT, related_name='tournament_question_choice', blank=False, null=False)
+    is_answer = models.BooleanField(null=False, blank=False)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "TournamentQuestionChoice"
+        verbose_name_plural = "TournamentQuestionChoices"
+        db_table = 'tournament_question_choice'

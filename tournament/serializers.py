@@ -30,10 +30,10 @@ class TournamentQuestionChoiceSerializer(serializers.ModelSerializer):
 
 
 class TournamentQuestionSerializer(serializers.ModelSerializer):
-    choice = TournamentQuestionChoiceSerializer(many=True)
+    tournament_question_choice = TournamentQuestionChoiceSerializer(many=True)
 
     class Meta:
         model = TournamentQuestion
         fields = (
-            'id', 'tournament', 'title', 'choice'
+            'id', 'tournament', 'title', 'tournament_question_choice'
         )

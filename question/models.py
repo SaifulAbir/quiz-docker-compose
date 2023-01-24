@@ -71,6 +71,7 @@ class ParticipantAnswer(AbstractTimeStamp):
     given_ans = models.CharField(max_length=700, null=False, blank=False)
     total_points = models.IntegerField(null=False, blank=False, default='0')
     is_correct = models.BooleanField(null=False, blank=False, default=False)
+
     def __str__(self):
         return self.question
 
@@ -78,6 +79,7 @@ class ParticipantAnswer(AbstractTimeStamp):
         verbose_name = "ParticipantAnswer"
         verbose_name_plural = "ParticipantAnswers"
         db_table = 'participant_answer'
+
 
 class CategoryWiseLeaderBoard(AbstractTimeStamp):
     user_id = models.CharField(max_length=255, null=True, blank=True)

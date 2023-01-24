@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'question',
     'drf_yasg',
     'import_export',
+    'tournament',
 ]
 
 MIDDLEWARE = [

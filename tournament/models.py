@@ -1,4 +1,5 @@
 from django.db import models
+from user.models import User
 
 from quiz.models import AbstractTimeStamp
 from question.models import Question, Category
@@ -56,3 +57,32 @@ class TournamentQuestionChoice(AbstractTimeStamp):
         verbose_name = "TournamentQuestionChoice"
         verbose_name_plural = "TournamentQuestionChoices"
         db_table = 'tournament_question_choice'
+
+
+class StoreTournamentAnswer(AbstractTimeStamp):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    tournament_id = models.ForeignKey(Tournament, on_delete=models.CASCADE)
+    point = models.IntegerField(null=False, blank=False, default='0')
+
+    def __str__(self):
+        return self.tournament_id.title
+
+    class Meta:
+        verbose_name = "StoreTournamentAnswer"
+        verbose_name_plural = "StoreTournamentAnswers"
+        db_table = 'store_tournament_answer'
+
+
+class TournamentWiseLeaderBoard(AbstractTimeStamp):
+    user_id = models.CharField(max_length=255, null=True, blank=True)
+    tournament_id = models.CharField(max_length=255, null=True, blank=True)
+    tour_point = models.IntegerField(null=True, blank=True, default='0')
+    user_name = models.CharField(max_length=255, default='User Name')
+
+    def __str__(self):
+        return self.user_name
+
+    class Meta:
+        verbose_name = "TournamentWiseLeaderBoard"
+        verbose_name_plural = "TournamentWiseLeaderBoards"
+        db_table = 'tournament_wise_leader_board'

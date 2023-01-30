@@ -1,6 +1,6 @@
 from rest_framework import serializers
 # from question.serializers import QuestionSerializer, QuestionChoiceSerializer, CategorySerializer
-from .models import Tournament, TournamentQuestion, TournamentQuestionChoice
+from .models import Tournament, TournamentQuestion, TournamentQuestionChoice, StoreTournamentAnswer, TournamentWiseLeaderBoard
 
 
 class TournamentListSerializer(serializers.ModelSerializer):
@@ -36,4 +36,26 @@ class TournamentQuestionSerializer(serializers.ModelSerializer):
         model = TournamentQuestion
         fields = (
             'id', 'tournament', 'title', 'choice'
+        )
+
+
+class StoreTournamentAnswerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = StoreTournamentAnswer
+        fields = (
+            'user_id',
+            'tournament_id',
+            'point',
+        )
+
+
+class TournamentWiseLeaderBoardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TournamentWiseLeaderBoard
+        fields = (
+            'user_id',
+            'tournament_id'
+            'tour_point',
+            'user_name',
         )

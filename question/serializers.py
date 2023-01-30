@@ -43,10 +43,8 @@ class StoreAnswerSerializer(serializers.ModelSerializer):
             'user_id',
             'point',
             'cat_id',
-            'point',
-            # 'question_id',
-            # 'answer',
         )
+
 
 class CategoryWiseLeaderBoardSerializer(serializers.ModelSerializer):
 

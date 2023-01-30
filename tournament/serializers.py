@@ -55,7 +55,7 @@ class TournamentWiseLeaderBoardSerializer(serializers.ModelSerializer):
         model = TournamentWiseLeaderBoard
         fields = (
             'user_id',
-            'tournament_id'
+            'tournament_id',
             'tour_point',
             'user_name',
         )
